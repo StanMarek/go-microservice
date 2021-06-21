@@ -4,19 +4,69 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+	"unicode"
 
+	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 )
 
+// TODO: add more validation rules
 type User struct {
 	Id       int    `json:"_id,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Login    string `json:"login,omitempty"`
-	Password string `json:"password,omitempty"`
+	Email    string `json:"email,omitempty" validate:"email,required"`
+	Login    string `json:"login,omitempty" validate:"required"`
+	Password string `json:"password,omitempty" validate:"password,required"`
+}
+
+func (u *User) ToJson(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(u)
+}
+
+func (u *User) FromJson(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(u)
+}
+
+// TODO: correct password validation
+func PasswordValidation(fl validator.FieldLevel) bool {
+	const minLength = 6
+	var upperCase bool = false
+	var lowerCase bool = false
+	var number bool = false
+	var currentLength = 0
+	password := fl.Field().String()
+
+	for _, character := range password {
+		if unicode.IsNumber(character) {
+			number = true
+			currentLength++
+		}
+		if unicode.IsUpper(character) {
+			upperCase = true
+			currentLength++
+		}
+		if unicode.IsLower(character) {
+			lowerCase = true
+			currentLength++
+		}
+	}
+	if upperCase || lowerCase || number || currentLength >= minLength {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (u *User) Validate() error {
+	validate := validator.New()
+	validate.RegisterValidation("password", PasswordValidation)
+	return validate.Struct(u)
 }
 
 var Users []User
@@ -55,7 +105,8 @@ func GetUser(writer http.ResponseWriter, request *http.Request) {
 			break
 		}
 	}
-	json.NewEncoder(writer).Encode(jsonUser)
+	//json.NewEncoder(writer).Encode(jsonUser)
+	jsonUser.ToJson(writer)
 }
 
 func DeleteUser(writer http.ResponseWriter, request *http.Request) {
@@ -79,12 +130,22 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 	indexInt, _ := strconv.Atoi(indexParam)
 	var updatedUser User
 	json.NewDecoder(request.Body).Decode(&updatedUser)
+	err := updatedUser.Validate()
+	if err != nil {
+		http.Error(
+			writer,
+			fmt.Sprintf("Error validating user: %s", err),
+			http.StatusBadRequest,
+		)
+		return
+	}
 	for index, user := range Users {
 		if user.Id == indexInt {
 			Users[index].Email = updatedUser.Email
 			Users[index].Login = updatedUser.Login
 			Users[index].Password = updatedUser.Password
-			json.NewEncoder(writer).Encode(updatedUser)
+			//json.NewEncoder(writer).Encode(updatedUser)
+			updatedUser.ToJson(writer)
 		}
 	}
 }
@@ -93,13 +154,24 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
 	var user User
 	json.NewDecoder(request.Body).Decode(&user)
+	//user.Validate()
+	err := user.Validate()
+	if err != nil {
+		http.Error(
+			writer,
+			fmt.Sprintf("Error validating user: %s", err),
+			http.StatusBadRequest,
+		)
+		return
+	}
 	exists, _ := Exists(user.Id)
 	if exists {
-		fmt.Fprintf(writer, "User od id %d already exists", user.Id)
+		fmt.Fprintf(writer, "User of id {%d} already exists", user.Id)
 		return
 	} else {
 		Users = append(Users, user)
-		json.NewEncoder(writer).Encode(user)
+		//json.NewEncoder(writer).Encode(user)
+		user.ToJson(writer)
 	}
 }
 
