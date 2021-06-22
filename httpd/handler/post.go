@@ -6,6 +6,10 @@ import (
 	"microservice/model"
 	"net/http"
 	"time"
+
+	uv "microservice/validation"
+
+	"github.com/go-playground/validator"
 )
 
 type UserPostRequest struct {
@@ -14,21 +18,18 @@ type UserPostRequest struct {
 	Password string `json:"password" validate:"password,required"`
 }
 
+func (upr *UserPostRequest) Validate() error {
+	validate := validator.New()
+	validate.RegisterValidation("password", uv.PasswordValidation)
+	return validate.Struct(upr)
+}
+
 func AddUser(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
 
 	var userPostRequest UserPostRequest
 	json.NewDecoder(request.Body).Decode(&userPostRequest)
-
-	var user model.User
-	user.CreatedAt = time.Now()
-	user.Id = model.NextId()
-	user.Email = userPostRequest.Email
-	user.Login = user.ParseEmailToLogin()
-	user.Password = userPostRequest.Password
-
-	user.Validate()
-	err := user.Validate()
+	err := userPostRequest.Validate()
 	if err != nil {
 		http.Error(
 			writer,
@@ -37,6 +38,14 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
+
+	var user model.User
+	user.CreatedAt = time.Now()
+	user.Id = model.NextId()
+	user.Email = userPostRequest.Email
+	user.Login = user.ParseEmailToLogin()
+	user.Password = userPostRequest.Password
+
 	exists, _ := model.Exists(user.Id)
 	if exists {
 		fmt.Fprintf(writer, "User of id {%d} already exists", user.Id)
