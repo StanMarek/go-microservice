@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"io"
+	"time"
 	"unicode"
 
 	"github.com/go-playground/validator"
@@ -10,13 +11,30 @@ import (
 
 // TODO: add more validation rules
 type User struct {
-	Id       int    `json:"_id,omitempty"`
-	Email    string `json:"email,omitempty" validate:"email,required"`
-	Login    string `json:"login,omitempty" validate:"required"`
-	Password string `json:"password,omitempty" validate:"password,required"`
+	Id        int       `json:"_id,omitempty"`
+	Email     string    `json:"email,omitempty"`
+	Login     string    `json:"login,omitempty"`
+	Password  string    `json:"password,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
 var Users []User
+
+func (u *User) ParseEmailToLogin() string {
+	var login []rune
+	for _, char := range u.Email {
+		if char == '@' {
+			break
+		}
+		login = append(login, char)
+	}
+	return string(login)
+}
+
+func NextId() int {
+	return len(Users) + 1
+}
 
 func (u *User) ToJson(w io.Writer) error {
 	e := json.NewEncoder(w)
