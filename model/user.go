@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"io"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// TODO: add more validation rules
 type User struct {
-	Id        int       `json:"_id,omitempty"`
-	Email     string    `json:"email,omitempty"`
-	Login     string    `json:"login,omitempty"`
-	Password  string    `json:"password,ozmitempty"`
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	Id        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Email     string             `json:"email,omitempty" bson:"email,omitempty"`
+	Login     string             `json:"login,omitempty" bson:"login,omitempty"`
+	Password  string             `json:"password,omitempty" bson:"password,omitempty"`
+	CreatedAt time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }
 
 var Users []User
@@ -43,11 +44,11 @@ func (u *User) FromJson(r io.Reader) error {
 	return d.Decode(u)
 }
 
-func Exists(id int) (bool, int) {
-	for index, i := range Users {
-		if id == i.Id {
-			return true, index
-		}
-	}
-	return false, -1
-}
+// func Exists(id int) (bool, int) {
+// 	for index, i := range Users {
+// 		if id == i.Id {
+// 			return true, index
+// 		}
+// 	}
+// 	return false, -1
+// }

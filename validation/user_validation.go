@@ -6,8 +6,6 @@ import (
 	"github.com/go-playground/validator"
 )
 
-// TODO: correct password validation
-// doesn't work properly yet
 func PasswordValidation(fl validator.FieldLevel) bool {
 	const minLength = 6
 	var upperCase bool = false
