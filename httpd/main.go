@@ -7,31 +7,17 @@ import (
 	"net/http"
 	"time"
 
+	"microservice/database"
 	endpoint "microservice/httpd/handler"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
-
-	// clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	// client, err := mongo.Connect(context.TODO(), clientOptions)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// err = client.Ping(context.TODO(), nil)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Println("Connected to mongo")
-
-	// collection := client.Database("go_microservice").Collection("users")
-
-	// err = client.Disconnect(context.TODO())
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Println("Disconnected")
+	err := database.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	router := mux.NewRouter()
 	server := &http.Server{

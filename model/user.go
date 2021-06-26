@@ -9,13 +9,12 @@ import (
 )
 
 type User struct {
-	Id    primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Email string             `json:"email,omitempty" bson:"email,omitempty"`
-	Login string             `json:"login,omitempty" bson:"login,omitempty"`
-	//Password       string             `json:"password,omitempty" bson:"password,omitempty"`
-	HashedPassword []byte    `json:"hashed_password,omitempty" bson:"hashed_password,omitempty"`
-	CreatedAt      time.Time `json:"created_at,omitempty" bson:"created_at,omitempty"`
-	UpdatedAt      time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+	Id             primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Email          string             `json:"email,omitempty" bson:"email,omitempty"`
+	Login          string             `json:"login,omitempty" bson:"login,omitempty"`
+	HashedPassword []byte             `json:"hashed_password,omitempty" bson:"hashed_password,omitempty"`
+	CreatedAt      time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt      time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }
 
 var Users []User
@@ -44,12 +43,3 @@ func (u *User) FromJson(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(u)
 }
-
-// func Exists(id int) (bool, int) {
-// 	for index, i := range Users {
-// 		if id == i.Id {
-// 			return true, index
-// 		}
-// 	}
-// 	return false, -1
-// }

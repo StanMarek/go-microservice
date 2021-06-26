@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"microservice/database"
 	"microservice/model"
 	"net/http"
 	"time"
@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-playground/validator"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -36,23 +35,6 @@ const loginPrefix = "@new_"
 func AddUser(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
 
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client, _ = mongo.Connect(ctx, clientOptions)
-
-	// clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	// client, err := mongo.Connect(context.TODO(), clientOptions)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// err = client.Ping(context.TODO(), nil)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Println("Connected to mongo")
-
-	// writer.Header().Add("content-type", "application/json")
-
 	var userPostRequest UserPostRequest
 	json.NewDecoder(request.Body).Decode(&userPostRequest)
 	err := userPostRequest.Validate()
@@ -67,32 +49,19 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 
 	var user model.User
 	user.CreatedAt = time.Now()
-	// user.Id = model.NextId()
 	user.Email = userPostRequest.Email
-	login := loginPrefix + user.ParseEmailToLogin()
-	user.Login = login
-	//user.HaPassword = userPostRequest.Password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userPostRequest.Password), bcrypt.DefaultCost)
+	user.Login = loginPrefix + user.ParseEmailToLogin()
+	user.HashedPassword, err = bcrypt.GenerateFromPassword([]byte(userPostRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	//hashedPassword = string(hashedPassword)
-	user.HashedPassword = hashedPassword
-
-	// exists, _ := model.Exists(user.Id)
-	// if exists {
-	// 	fmt.Fprintf(writer, "User of id {%d} already exists", user.Id)
-	// 	return
-	// } else {
-	// 	model.Users = append(model.Users, user)
-	// 	//json.NewEncoder(writer).Encode(user)
-	// 	user.ToJson(writer)
-	// }
-
-	collection := client.Database("go_microservice").Collection("users")
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-	result, _ := collection.InsertOne(ctx, user)
+	result, err := database.InsertUser(&user)
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))
+		return
+	}
 	json.NewEncoder(writer).Encode(result)
 }
