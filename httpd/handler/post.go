@@ -18,18 +18,20 @@ import (
 )
 
 type UserPostRequest struct {
-	Email string `json:"email" validate:"email,required"`
-	//Login 		string	`json:"login" validate:"required"`
+	Email    string `json:"email" validate:"email,required,uni_email"`
 	Password string `json:"password" validate:"password,required"`
 }
 
 func (upr *UserPostRequest) Validate() error {
 	validate := validator.New()
 	validate.RegisterValidation("password", uv.PasswordValidation)
+	validate.RegisterValidation("uni_email", uv.UniqueEmailValidation)
 	return validate.Struct(upr)
 }
 
 var client *mongo.Client
+
+const loginPrefix = "@new_"
 
 func AddUser(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
@@ -67,16 +69,17 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 	user.CreatedAt = time.Now()
 	// user.Id = model.NextId()
 	user.Email = userPostRequest.Email
-	user.Login = user.ParseEmailToLogin()
-	user.Password = userPostRequest.Password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	login := loginPrefix + user.ParseEmailToLogin()
+	user.Login = login
+	//user.HaPassword = userPostRequest.Password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userPostRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
 	//hashedPassword = string(hashedPassword)
-	user.HashedPassword = string(hashedPassword)
+	user.HashedPassword = hashedPassword
 
 	// exists, _ := model.Exists(user.Id)
 	// if exists {

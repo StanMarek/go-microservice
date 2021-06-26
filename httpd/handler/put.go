@@ -8,6 +8,7 @@ import (
 	"microservice/model"
 	uv "microservice/validation"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator"
@@ -20,14 +21,16 @@ import (
 )
 
 type UserUpdateRequest struct {
-	Email    string `json:"email" validate:"email,required"`
-	NewLogin string `json:"new_login"`
-	Password string `json:"password" validate:"password,required"`
+	NewEmail    string `json:"email" validate:"email,uni_email"`
+	NewLogin    string `json:"login" validate:"login"`
+	NewPassword string `json:"password" validate:"password"`
 }
 
 func (uur *UserUpdateRequest) Validate() error {
 	validate := validator.New()
 	validate.RegisterValidation("password", uv.PasswordValidation)
+	validate.RegisterValidation("uni_email", uv.UniqueEmailValidation)
+	validate.RegisterValidation("login", uv.UniqueLoginValidation)
 	return validate.Struct(uur)
 }
 
@@ -47,7 +50,7 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		http.Error(
 			writer,
-			fmt.Sprintf("Error validating user udpdate request: %s", err),
+			fmt.Sprintf("Error validating user udpdate request: %s", err.Error()),
 			http.StatusBadRequest,
 		)
 		return
@@ -64,20 +67,24 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 	// 	}
 	// }
 
-	user.Email = updatedUser.Email
+	user.Email = updatedUser.NewEmail
 	//user.Login = user.ParseEmailToLogin()
+	if strings.Contains(updatedUser.NewLogin, loginPrefix) {
+		fmt.Fprint(writer, "Updated login contains prefix for new default logins. Please ensure that your new login does not contain that prefix")
+		return
+	}
 	if updatedUser.NewLogin != "" {
 		user.Login = updatedUser.NewLogin
 	} else {
 		user.Login = user.ParseEmailToLogin()
 	}
-	user.Password = updatedUser.Password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	//user.Password = updatedUser.Password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedUser.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	user.HashedPassword = string(hashedPassword)
+	user.HashedPassword = hashedPassword
 	//user.CreatedAt = model.Users[id].CreatedAt
 	user.UpdatedAt = time.Now()
 
@@ -88,7 +95,7 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 	update := bson.D{
 		{"$set", bson.D{{"email", user.Email},
 			{"login", user.Login},
-			{"password", user.Password},
+			{"hashed_password", user.HashedPassword},
 			{"updated_at", user.UpdatedAt},
 		},
 		},
