@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"microservice/model"
 	uv "microservice/validation"
 	"net/http"
@@ -15,11 +16,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUpdateRequest struct {
-	Email string `json:"email" validate:"email,required"`
-	//Login 		string	`json:"login" validate:"required"`
+	Email    string `json:"email" validate:"email,required"`
+	NewLogin string `json:"new_login"`
 	Password string `json:"password" validate:"password,required"`
 }
 
@@ -63,8 +65,19 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 	// }
 
 	user.Email = updatedUser.Email
-	user.Login = user.ParseEmailToLogin()
+	//user.Login = user.ParseEmailToLogin()
+	if updatedUser.NewLogin != "" {
+		user.Login = updatedUser.NewLogin
+	} else {
+		user.Login = user.ParseEmailToLogin()
+	}
 	user.Password = updatedUser.Password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	user.HashedPassword = string(hashedPassword)
 	//user.CreatedAt = model.Users[id].CreatedAt
 	user.UpdatedAt = time.Now()
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"microservice/model"
 	"net/http"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-playground/validator"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserPostRequest struct {
@@ -67,6 +69,14 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 	user.Email = userPostRequest.Email
 	user.Login = user.ParseEmailToLogin()
 	user.Password = userPostRequest.Password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	//hashedPassword = string(hashedPassword)
+	user.HashedPassword = string(hashedPassword)
 
 	// exists, _ := model.Exists(user.Id)
 	// if exists {
