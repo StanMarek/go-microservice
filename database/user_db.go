@@ -62,6 +62,16 @@ func GetUserById(id primitive.ObjectID) (model.User, error) {
 	return user, nil
 }
 
+func GetUserByLogin(login string) (model.User, error) {
+	var user model.User
+
+	err := collection.FindOne(ctx, model.User{Login: login}).Decode(&user)
+	if err != nil {
+		return user, err
+	}
+	return user, nil
+}
+
 func UpdateUserById(id primitive.ObjectID, newData *bson.D) (*mongo.UpdateResult, error) {
 	result, err := collection.UpdateByID(ctx, id, newData)
 	if err != nil {

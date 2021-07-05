@@ -12,7 +12,6 @@ import (
 	uv "microservice/validation"
 
 	"github.com/go-playground/validator"
-	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,8 +26,6 @@ func (upr *UserPostRequest) Validate() error {
 	validate.RegisterValidation("uni_email", uv.UniqueEmailValidation)
 	return validate.Struct(upr)
 }
-
-var client *mongo.Client
 
 const loginPrefix = "@new_"
 

@@ -41,5 +41,7 @@ func HandleRequest(server *http.Server, router *mux.Router) {
 	router.HandleFunc("/users/{id}", endpoint.UpdateUser).Methods("PUT")
 	router.HandleFunc("/users/{id}", endpoint.DeleteUser).Methods("DELETE")
 
+	router.HandleFunc("/login", endpoint.Login).Methods("POST")
+
 	log.Fatal(server.ListenAndServe())
 }
