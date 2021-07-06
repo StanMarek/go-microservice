@@ -19,6 +19,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	endpoint.ConnectRedis()
+
 	router := mux.NewRouter()
 	server := &http.Server{
 		Handler:      router,
@@ -32,7 +34,7 @@ func main() {
 
 func HandleRequest(server *http.Server, router *mux.Router) {
 
-	router.HandleFunc("/root", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
 	}).Methods("GET")
 	router.HandleFunc("/users", endpoint.GetAllUsers).Methods("GET")
@@ -42,6 +44,7 @@ func HandleRequest(server *http.Server, router *mux.Router) {
 	router.HandleFunc("/users/{id}", endpoint.DeleteUser).Methods("DELETE")
 
 	router.HandleFunc("/login", endpoint.Login).Methods("POST")
+	router.HandleFunc("/logout", endpoint.Logout).Methods("POST")
 
 	log.Fatal(server.ListenAndServe())
 }

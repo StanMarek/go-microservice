@@ -57,7 +57,7 @@ func GetUserById(id primitive.ObjectID) (model.User, error) {
 
 	err := collection.FindOne(ctx, model.User{Id: id}).Decode(&user)
 	if err != nil {
-		return user, err
+		return model.User{}, err
 	}
 	return user, nil
 }
@@ -67,7 +67,7 @@ func GetUserByLogin(login string) (model.User, error) {
 
 	err := collection.FindOne(ctx, model.User{Login: login}).Decode(&user)
 	if err != nil {
-		return user, err
+		return model.User{}, err
 	}
 	return user, nil
 }
