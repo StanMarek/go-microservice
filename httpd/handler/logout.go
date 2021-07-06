@@ -1,17 +1,21 @@
 package handler
 
-import "net/http"
+import (
+	"microservice/authentication"
+	"net/http"
+)
 
 func Logout(writer http.ResponseWriter, request *http.Request) {
-	Extract := func(request *http.Request) (*AccessDetails, error) {
-
-	}
-}
-
-func DeleteAuthorization(authId string) (int64, error) {
-	del, err := clientRedis.Del(ctxRedis, authId).Result()
+	authId, _, err := authentication.ExtractTokenMetadata(request)
 	if err != nil {
-		return 0, err
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
 	}
-	return del, nil
+	deleteAuth, err := authentication.DeleteAuthentication(authId)
+	if err != nil || deleteAuth == 0 {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	writer.WriteHeader(http.StatusOK)
+	writer.Write([]byte(`{"message": "Logged out"}`))
 }

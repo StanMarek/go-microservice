@@ -82,6 +82,6 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))
 		return
 	}
-
+	writer.WriteHeader(http.StatusOK)
 	json.NewEncoder(writer).Encode(result)
 }

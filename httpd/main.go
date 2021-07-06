@@ -19,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	endpoint.ConnectRedis()
+	database.ConnectRedis()
 
 	router := mux.NewRouter()
 	server := &http.Server{
