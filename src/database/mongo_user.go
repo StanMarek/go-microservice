@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"microservice/model"
+	"microservice/src/model"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

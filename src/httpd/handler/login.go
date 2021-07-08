@@ -2,8 +2,8 @@ package handler
 
 import (
 	"encoding/json"
-	auth "microservice/authentication"
-	"microservice/database"
+	auth "microservice/src/authentication"
+	"microservice/src/database"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -15,6 +15,8 @@ type Credentials struct {
 }
 
 func Login(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Add("content-type", "application/json")
+
 	var credentials Credentials
 	err := json.NewDecoder(request.Body).Decode(&credentials)
 	if err != nil {
@@ -54,7 +56,7 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 		"access_token":  token.AccessToken,
 		"refresh_token": token.RefreshToken,
 	}
-	writer.WriteHeader(http.StatusOK)
+	writer.WriteHeader(http.StatusCreated)
 	writer.Write([]byte(`{"message": "Logged in"}`))
 	json.NewEncoder(writer).Encode(tokens)
 }

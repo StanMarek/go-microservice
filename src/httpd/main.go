@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"microservice/authentication"
-	"microservice/database"
-	endpoint "microservice/httpd/handler"
+	"microservice/src/authentication"
+	"microservice/src/database"
+	endpoint "microservice/src/httpd/handler"
 
 	"github.com/gorilla/mux"
 )
@@ -36,8 +36,9 @@ func main() {
 func HandleRequest(server *http.Server, router *mux.Router) {
 
 	router.HandleFunc("/login", endpoint.Login).Methods("POST")
-	router.HandleFunc("/logout", JWTMiddleware(endpoint.Logout)).Methods("POST")
+	router.HandleFunc("/logout", authentication.JWTMiddleware(endpoint.Logout)).Methods("POST")
 	router.HandleFunc("/register", endpoint.AddUser).Methods("POST") // <- register
+	router.HandleFunc("/refreshtoken", authentication.RefreshToken).Methods("POST")
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
@@ -49,16 +50,4 @@ func HandleRequest(server *http.Server, router *mux.Router) {
 	router.HandleFunc("/users/{id}", JWTMiddleware(endpoint.DeleteUser)).Methods("DELETE")
 
 	log.Fatal(server.ListenAndServe())
-}
-
-func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		isTokenValidError := authentication.IsTokenValid(request)
-		if isTokenValidError != nil {
-			writer.WriteHeader(http.StatusUnauthorized)
-			writer.Write([]byte(`{"message": ` + isTokenValidError.Error() + `"}`))
-			return
-		}
-		next.ServeHTTP(writer, request)
-	})
 }

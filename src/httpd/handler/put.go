@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"microservice/database"
+	"microservice/src/database"
 
-	"microservice/model"
-	uv "microservice/validation"
+	"microservice/src/model"
+	uv "microservice/src/validation"
 	"net/http"
 	"strings"
 	"time"
@@ -82,6 +82,6 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))
 		return
 	}
-	writer.WriteHeader(http.StatusOK)
+	writer.WriteHeader(http.StatusCreated)
 	json.NewEncoder(writer).Encode(result)
 }

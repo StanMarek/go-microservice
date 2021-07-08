@@ -1,11 +1,13 @@
 package handler
 
 import (
-	"microservice/authentication"
+	"microservice/src/authentication"
 	"net/http"
 )
 
 func Logout(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Add("content-type", "application/json")
+
 	authId, _, err := authentication.ExtractTokenMetadata(request)
 	if err != nil {
 		writer.WriteHeader(http.StatusUnauthorized)
@@ -16,6 +18,6 @@ func Logout(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	writer.WriteHeader(http.StatusOK)
+	writer.WriteHeader(http.StatusCreated)
 	writer.Write([]byte(`{"message": "Logged out"}`))
 }

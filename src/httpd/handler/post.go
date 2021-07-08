@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"microservice/database"
+	"microservice/src/database"
+	"microservice/src/model"
 
-	"microservice/model"
 	"net/http"
 	"time"
 
-	uv "microservice/validation"
+	uv "microservice/src/validation"
 
 	"github.com/go-playground/validator"
 	"golang.org/x/crypto/bcrypt"
@@ -61,6 +61,6 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))
 		return
 	}
-	writer.WriteHeader(http.StatusOK)
+	writer.WriteHeader(http.StatusCreated)
 	json.NewEncoder(writer).Encode(result)
 }
