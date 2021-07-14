@@ -173,7 +173,7 @@ func RefreshToken(writer http.ResponseWriter, request *http.Request) {
 		userIdClaims := claims["user_id"]
 		userId := userIdClaims.(primitive.ObjectID)
 		delete, err := DeleteAuthentication(refreshId)
-		if delete != 0 || err != nil {
+		if delete == 0 || err != nil {
 			writer.WriteHeader(http.StatusUnauthorized)
 			writer.Write([]byte(`{"message": "` + err.Error() + `"}`))
 			return

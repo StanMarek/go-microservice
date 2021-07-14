@@ -15,9 +15,8 @@ type User struct {
 	HashedPassword []byte             `json:"hashed_password,omitempty" bson:"hashed_password,omitempty"`
 	CreatedAt      time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
 	UpdatedAt      time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+	Activities     []Activity         `json:"activities,omitempty" bson:"activities,omitempty"`
 }
-
-var Users []User
 
 func (u *User) ParseEmailToLogin() string {
 	var login []rune
@@ -28,10 +27,6 @@ func (u *User) ParseEmailToLogin() string {
 		login = append(login, char)
 	}
 	return string(login)
-}
-
-func NextId() int {
-	return len(Users) + 1
 }
 
 func (u *User) ToJson(w io.Writer) error {

@@ -25,6 +25,7 @@ func Connect() error {
 		return err
 	}
 	collection = client.Database("go_microservice").Collection("users")
+	activityCollection = client.Database("go_microservice").Collection("activities")
 	return nil
 }
 
