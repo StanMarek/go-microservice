@@ -3,26 +3,32 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"microservice/model"
+	"log"
+	"microservice/src/database"
+	"microservice/src/model"
+
 	"net/http"
 	"time"
 
-	uv "microservice/validation"
+	uv "microservice/src/validation"
 
 	"github.com/go-playground/validator"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserPostRequest struct {
-	Email string `json:"email" validate:"email,required"`
-	//Login 		string	`json:"login" validate:"required"`
+	Email    string `json:"email" validate:"email,required,uni_email"`
 	Password string `json:"password" validate:"password,required"`
 }
 
 func (upr *UserPostRequest) Validate() error {
 	validate := validator.New()
 	validate.RegisterValidation("password", uv.PasswordValidation)
+	validate.RegisterValidation("uni_email", uv.UniqueEmailValidation)
 	return validate.Struct(upr)
 }
+
+const loginPrefix = "@new_"
 
 func AddUser(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
@@ -41,18 +47,20 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 
 	var user model.User
 	user.CreatedAt = time.Now()
-	user.Id = model.NextId()
 	user.Email = userPostRequest.Email
-	user.Login = user.ParseEmailToLogin()
-	user.Password = userPostRequest.Password
-
-	exists, _ := model.Exists(user.Id)
-	if exists {
-		fmt.Fprintf(writer, "User of id {%d} already exists", user.Id)
+	user.Login = loginPrefix + user.ParseEmailToLogin()
+	user.HashedPassword, err = bcrypt.GenerateFromPassword([]byte(userPostRequest.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal(err)
 		return
-	} else {
-		model.Users = append(model.Users, user)
-		//json.NewEncoder(writer).Encode(user)
-		user.ToJson(writer)
 	}
+
+	result, err := database.InsertUser(&user)
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))
+		return
+	}
+	writer.WriteHeader(http.StatusCreated)
+	json.NewEncoder(writer).Encode(result)
 }
