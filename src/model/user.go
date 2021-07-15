@@ -15,7 +15,7 @@ type User struct {
 	HashedPassword []byte             `json:"hashed_password,omitempty" bson:"hashed_password,omitempty"`
 	CreatedAt      time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
 	UpdatedAt      time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
-	Activities     []Activity         `json:"activities,omitempty" bson:"activities,omitempty"`
+	Activities     Activity           `json:"activity,omitempty" bson:"activity,omitempty"`
 }
 
 func (u *User) ParseEmailToLogin() string {

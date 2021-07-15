@@ -14,7 +14,6 @@ import (
 
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -68,15 +67,7 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 	}
 	user.UpdatedAt = time.Now()
 
-	update := bson.D{
-		{"$set", bson.D{{"email", user.Email},
-			{"login", user.Login},
-			{"hashed_password", user.HashedPassword},
-			{"updated_at", user.UpdatedAt},
-		},
-		},
-	}
-	result, err := database.UpdateUserById(id, &update)
+	result, err := database.UpdateUserById(id, user)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))

@@ -48,9 +48,10 @@ func HandleRequest(server *http.Server, router *mux.Router) {
 	}).Methods("GET")
 	router.HandleFunc("/users", auth.JWTMiddleware(endpoint.GetAllUsers)).Methods("GET")
 	router.HandleFunc("/users/{id}", auth.JWTMiddleware(endpoint.GetUser)).Methods("GET")
-	router.HandleFunc("/users", auth.JWTMiddleware(endpoint.AddUser)).Methods("POST") // <- register
+	router.HandleFunc("/users", endpoint.AddUser).Methods("POST") // <- register
 	router.HandleFunc("/users/{id}", auth.JWTMiddleware(endpoint.UpdateUser)).Methods("PUT")
 	router.HandleFunc("/users/{id}", auth.JWTMiddleware(endpoint.DeleteUser)).Methods("DELETE")
+	router.HandleFunc("/users/{id}/act/{key}", auth.JWTMiddleware(api.UserRandomActivity)).Methods("PUT")
 
 	log.Fatal(server.ListenAndServe())
 }

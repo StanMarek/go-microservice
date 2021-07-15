@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -9,6 +10,7 @@ import (
 	"microservice/src/model"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -25,14 +27,7 @@ type ResponseData struct {
 func RandomActvity(res http.ResponseWriter, req *http.Request) {
 	res.Header().Add("content-type", "application/json")
 
-	response, err := http.Get("https://www.boredapi.com/api/activity")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	reponseData, _ := ioutil.ReadAll(response.Body)
-	var responseObj ResponseData
-	json.Unmarshal(reponseData, &responseObj)
+	responseObj := ReadApi()
 	activity := responseObj.ParseActivity()
 	activity.Id = primitive.NewObjectID()
 	result, err := database.InsertActivity(activity)
@@ -44,7 +39,49 @@ func RandomActvity(res http.ResponseWriter, req *http.Request) {
 	}
 	res.WriteHeader(http.StatusCreated)
 	json.NewEncoder(res).Encode(result)
-	json.NewEncoder(res).Encode(activity)
+	activity.ToJson(res)
+}
+func UserRandomActivity(res http.ResponseWriter, req *http.Request) {
+	res.Header().Add("content-type", "application/json")
+
+	params := mux.Vars(req)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+	key := params["key"]
+
+	fmt.Println("1")
+	act, err := database.GetActivity(key)
+	if err != nil {
+		fmt.Println("3")
+		res.WriteHeader(http.StatusInternalServerError)
+		res.Write([]byte(`{"message": ` + err.Error() + `"}`))
+		return
+	}
+	act.ToJson(res)
+	fmt.Println("2")
+
+	result, err := database.InsertActivityIntoUser(act, id)
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		res.Write([]byte(`{"message": ` + err.Error() + `"}`))
+		return
+	}
+	res.WriteHeader(http.StatusCreated)
+	json.NewEncoder(res).Encode(result)
+}
+
+func ReadApi() *ResponseData {
+	response, err := http.Get("https://www.boredapi.com/api/activity")
+	if err != nil {
+		log.Fatal(err)
+	}
+	reponseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var responseObj ResponseData
+	json.Unmarshal(reponseData, &responseObj)
+
+	return &responseObj
 }
 
 func (resData *ResponseData) ParseActivity() *model.Activity {

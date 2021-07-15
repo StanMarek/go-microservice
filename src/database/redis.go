@@ -8,8 +8,6 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// exported variables must have name starting with Big letter
-// other way it won't be expoerted
 var ClientRedis *redis.Client
 var CtxRedis = context.Background()
 
