@@ -20,6 +20,7 @@ func Connect() error {
 	clientOptions = options.Client().ApplyURI("mongodb://localhost:27017")
 	var err error
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancelFunc()
 	client, err = mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return err
@@ -73,8 +74,15 @@ func GetUserByLogin(login string) (model.User, error) {
 	return user, nil
 }
 
-func UpdateUserById(id primitive.ObjectID, newData *bson.D) (*mongo.UpdateResult, error) {
-	result, err := collection.UpdateByID(ctx, id, newData)
+func UpdateUserById(id primitive.ObjectID, user model.User) (*mongo.UpdateResult, error) {
+	update := bson.D{
+		{"$set", bson.D{
+			{"email", user.Email},
+			{"login", user.Login},
+			{"hashed_password", user.HashedPassword},
+			{"updated_at", user.UpdatedAt},
+		}}}
+	result, err := collection.UpdateByID(ctx, id, update)
 	if err != nil {
 		return nil, err
 	}
