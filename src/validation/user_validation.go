@@ -42,7 +42,8 @@ func PasswordValidation(fl validator.FieldLevel) bool {
 
 func UniqueEmailValidation(fl validator.FieldLevel) bool {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
 	client, _ := mongo.Connect(ctx, clientOptions)
 	collection := client.Database("go_microservice").Collection("users")
 
@@ -60,7 +61,8 @@ func UniqueEmailValidation(fl validator.FieldLevel) bool {
 
 func UniqueLoginValidation(fl validator.FieldLevel) bool {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
 	client, _ := mongo.Connect(ctx, clientOptions)
 	collection := client.Database("go_microservice").Collection("users")
 

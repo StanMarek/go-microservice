@@ -19,8 +19,8 @@ var collection *mongo.Collection
 func Connect() error {
 	clientOptions = options.Client().ApplyURI("mongodb://localhost:27017")
 	var err error
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	//defer cancelFunc()
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
 	client, err = mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return err

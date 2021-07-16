@@ -12,6 +12,7 @@ import (
 	api "microservice/src/httpd/freeAPI"
 	endpoint "microservice/src/httpd/handler"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -24,9 +25,15 @@ func main() {
 
 	database.ConnectRedis()
 
+	// Cross Origin Request Sharing
+	origin := handlers.AllowedOrigins([]string{"*"})
+	meth := handlers.AllowedMethods([]string{"GET", "POST", "PUT"})
+	head := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
+	cred := handlers.AllowCredentials()
+
 	router := mux.NewRouter()
 	server := &http.Server{
-		Handler:      router,
+		Handler:      handlers.CORS(origin, meth, head, cred)(router),
 		Addr:         "127.0.0.1:9090",
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
