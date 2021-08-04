@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -32,6 +33,8 @@ const loginPrefix = "@new_"
 
 func AddUser(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
 
 	var userPostRequest UserPostRequest
 	json.NewDecoder(request.Body).Decode(&userPostRequest)
@@ -55,7 +58,7 @@ func AddUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result, err := database.InsertUser(&user)
+	result, err := database.InsertUser(ctx, &user)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))

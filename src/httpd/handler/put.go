@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -34,6 +35,8 @@ func (uur *UserUpdateRequest) Validate() error {
 
 func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
 
 	var updatedUser UserUpdateRequest
 	json.NewDecoder(request.Body).Decode(&updatedUser)
@@ -67,7 +70,7 @@ func UpdateUser(writer http.ResponseWriter, request *http.Request) {
 	}
 	user.UpdatedAt = time.Now()
 
-	result, err := database.UpdateUserById(id, user)
+	result, err := database.UpdateUserById(ctx, id, user)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))

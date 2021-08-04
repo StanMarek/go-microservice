@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"microservice/src/database"
@@ -118,8 +119,8 @@ func ExtractTokenMetadata(request *http.Request) (string, primitive.ObjectID, er
 	return "", primitive.NilObjectID, err
 }
 
-func Fetch(accessId string) (primitive.ObjectID, error) {
-	userIdRedis, err := database.ClientRedis.Get(database.CtxRedis, accessId).Result()
+func Fetch(ctx context.Context, accessId string) (primitive.ObjectID, error) {
+	userIdRedis, err := database.ClientRedis.Get(ctx, accessId).Result()
 	if err != nil {
 		return primitive.NilObjectID, err
 	}
@@ -132,6 +133,7 @@ func Fetch(accessId string) (primitive.ObjectID, error) {
 
 func RefreshToken(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
+	ctx := request.Context()
 
 	mapToken := map[string]string{}
 	err := json.NewDecoder(request.Body).Decode(&mapToken)
@@ -144,7 +146,7 @@ func RefreshToken(writer http.ResponseWriter, request *http.Request) {
 
 	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
 		if _, isValid := token.Method.(*jwt.SigningMethodHMAC); !isValid {
-			return nil, fmt.Errorf("Bad signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("bad signing method: %v", token.Header["alg"])
 		}
 		return []byte(os.Getenv("REFRESH_TOKEN")), nil
 	})
@@ -172,7 +174,7 @@ func RefreshToken(writer http.ResponseWriter, request *http.Request) {
 
 		userIdClaims := claims["user_id"]
 		userId := userIdClaims.(primitive.ObjectID)
-		delete, err := DeleteAuthentication(refreshId)
+		delete, err := DeleteAuthentication(ctx, refreshId)
 		if delete == 0 || err != nil {
 			writer.WriteHeader(http.StatusUnauthorized)
 			writer.Write([]byte(`{"message": "` + err.Error() + `"}`))
@@ -186,7 +188,7 @@ func RefreshToken(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		err = GenerateAuthentication(userId, newToken)
+		err = GenerateAuthentication(ctx, userId, newToken)
 		if err != nil {
 			writer.WriteHeader(http.StatusForbidden)
 			writer.Write([]byte(`{"message": "` + err.Error() + `"}`))

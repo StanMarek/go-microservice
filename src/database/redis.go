@@ -4,12 +4,12 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 )
 
 var ClientRedis *redis.Client
-var CtxRedis = context.Background()
 
 func ConnectRedis() {
 	redisdsn := os.Getenv("REDIS_DSN")
@@ -21,7 +21,10 @@ func ConnectRedis() {
 		Password: "",
 		DB:       0,
 	})
-	if _, err := ClientRedis.Ping(CtxRedis).Result(); err != nil {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancelFunc()
+
+	if _, err := ClientRedis.Ping(ctx).Result(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	auth "microservice/src/authentication"
 	"microservice/src/database"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,6 +18,8 @@ type Credentials struct {
 
 func Login(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("content-type", "application/json")
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
 
 	var credentials Credentials
 	err := json.NewDecoder(request.Body).Decode(&credentials)
@@ -25,7 +29,7 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	user, err := database.GetUserByLogin(credentials.Login)
+	user, err := database.GetUserByLogin(ctx, credentials.Login)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))
@@ -45,7 +49,7 @@ func Login(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err = auth.GenerateAuthentication(user.Id, token)
+	err = auth.GenerateAuthentication(ctx, user.Id, token)
 	if err != nil {
 		writer.WriteHeader(http.StatusUnprocessableEntity)
 		writer.Write([]byte(`{"message": ` + err.Error() + `"}`))

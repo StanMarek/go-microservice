@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"microservice/src/model"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,7 +11,7 @@ import (
 
 var activityCollection *mongo.Collection
 
-func InsertActivity(activity *model.Activity) (*mongo.InsertOneResult, error) {
+func InsertActivity(ctx context.Context, activity *model.Activity) (*mongo.InsertOneResult, error) {
 	var err error
 	var findResult interface{}
 
@@ -22,7 +23,7 @@ func InsertActivity(activity *model.Activity) (*mongo.InsertOneResult, error) {
 	return nil, err
 }
 
-func InsertActivityIntoUser(act model.Activity, userId primitive.ObjectID) (*mongo.UpdateResult, error) {
+func InsertActivityIntoUser(ctx context.Context, act model.Activity, userId primitive.ObjectID) (*mongo.UpdateResult, error) {
 	filter := bson.M{"$and": []interface{}{bson.M{"_id": userId}}}
 	insert := bson.M{"$set": bson.M{
 		"activity.key":           act.Key,
@@ -36,7 +37,7 @@ func InsertActivityIntoUser(act model.Activity, userId primitive.ObjectID) (*mon
 	return result, err
 }
 
-func GetActivity(key string) (model.Activity, error) {
+func GetActivity(ctx context.Context, key string) (model.Activity, error) {
 	var act model.Activity
 
 	err := activityCollection.FindOne(ctx, bson.M{"key": key}).Decode(&act)

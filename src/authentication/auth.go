@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"context"
 	"microservice/src/database"
 	"net/http"
 	"time"
@@ -8,18 +9,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GenerateAuthentication(userId primitive.ObjectID, tokenData *TokenMetadata) error {
+func GenerateAuthentication(ctx context.Context, userId primitive.ObjectID, tokenData *TokenMetadata) error {
 
 	accessToken := time.Unix(tokenData.AccessExp, 0)
 	refreshToken := time.Unix(tokenData.RefreshExp, 0)
 	now := time.Now()
 
-	err := database.ClientRedis.Set(database.CtxRedis, tokenData.AccessId, userId.String(), accessToken.Sub(now)).Err()
+	err := database.ClientRedis.Set(ctx, tokenData.AccessId, userId.String(), accessToken.Sub(now)).Err()
 	if err != nil {
 		return err
 	}
 
-	err = database.ClientRedis.Set(database.CtxRedis, tokenData.RefreshId, userId.String(), refreshToken.Sub(now)).Err()
+	err = database.ClientRedis.Set(ctx, tokenData.RefreshId, userId.String(), refreshToken.Sub(now)).Err()
 	if err != nil {
 		return err
 	}
@@ -27,8 +28,8 @@ func GenerateAuthentication(userId primitive.ObjectID, tokenData *TokenMetadata)
 	return nil
 }
 
-func DeleteAuthentication(authId string) (int64, error) {
-	del, err := database.ClientRedis.Del(database.CtxRedis, authId).Result()
+func DeleteAuthentication(ctx context.Context, authId string) (int64, error) {
+	del, err := database.ClientRedis.Del(ctx, authId).Result()
 	if err != nil {
 		return 0, err
 	}

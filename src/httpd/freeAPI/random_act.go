@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,7 @@ import (
 	"microservice/src/database"
 	"microservice/src/model"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -26,11 +28,13 @@ type ResponseData struct {
 
 func RandomActvity(res http.ResponseWriter, req *http.Request) {
 	res.Header().Add("content-type", "application/json")
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
 
 	responseObj := ReadApi()
 	activity := responseObj.ParseActivity()
 	activity.Id = primitive.NewObjectID()
-	result, err := database.InsertActivity(activity)
+	result, err := database.InsertActivity(ctx, activity)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		res.Write([]byte(`{"message": ` + err.Error() + `"}`))
@@ -43,13 +47,15 @@ func RandomActvity(res http.ResponseWriter, req *http.Request) {
 }
 func UserRandomActivity(res http.ResponseWriter, req *http.Request) {
 	res.Header().Add("content-type", "application/json")
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
 
 	params := mux.Vars(req)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 	key := params["key"]
 
 	fmt.Println("1")
-	act, err := database.GetActivity(key)
+	act, err := database.GetActivity(ctx, key)
 	if err != nil {
 		fmt.Println("3")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -59,7 +65,7 @@ func UserRandomActivity(res http.ResponseWriter, req *http.Request) {
 	act.ToJson(res)
 	fmt.Println("2")
 
-	result, err := database.InsertActivityIntoUser(act, id)
+	result, err := database.InsertActivityIntoUser(ctx, act, id)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		res.Write([]byte(`{"message": ` + err.Error() + `"}`))

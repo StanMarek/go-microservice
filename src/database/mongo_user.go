@@ -13,7 +13,6 @@ import (
 
 var client *mongo.Client
 var clientOptions *options.ClientOptions
-var ctx context.Context
 var collection *mongo.Collection
 
 func Connect() error {
@@ -30,12 +29,12 @@ func Connect() error {
 	return nil
 }
 
-func InsertUser(user *model.User) (*mongo.InsertOneResult, error) {
+func InsertUser(ctx context.Context, user *model.User) (*mongo.InsertOneResult, error) {
 	result, err := collection.InsertOne(ctx, user)
 	return result, err
 }
 
-func GetUsers() ([]model.User, error) {
+func GetUsers(ctx context.Context) ([]model.User, error) {
 	var users []model.User
 
 	cursor, err := collection.Find(ctx, bson.M{})
@@ -54,7 +53,7 @@ func GetUsers() ([]model.User, error) {
 	return users, nil
 }
 
-func GetUserById(id primitive.ObjectID) (model.User, error) {
+func GetUserById(ctx context.Context, id primitive.ObjectID) (model.User, error) {
 	var user model.User
 
 	err := collection.FindOne(ctx, model.User{Id: id}).Decode(&user)
@@ -64,7 +63,7 @@ func GetUserById(id primitive.ObjectID) (model.User, error) {
 	return user, nil
 }
 
-func GetUserByLogin(login string) (model.User, error) {
+func GetUserByLogin(ctx context.Context, login string) (model.User, error) {
 	var user model.User
 
 	err := collection.FindOne(ctx, model.User{Login: login}).Decode(&user)
@@ -74,7 +73,7 @@ func GetUserByLogin(login string) (model.User, error) {
 	return user, nil
 }
 
-func UpdateUserById(id primitive.ObjectID, user model.User) (*mongo.UpdateResult, error) {
+func UpdateUserById(ctx context.Context, id primitive.ObjectID, user model.User) (*mongo.UpdateResult, error) {
 	update := bson.D{
 		{"$set", bson.D{
 			{"email", user.Email},
@@ -89,7 +88,7 @@ func UpdateUserById(id primitive.ObjectID, user model.User) (*mongo.UpdateResult
 	return result, nil
 }
 
-func DeleteUserById(id primitive.ObjectID) (*mongo.DeleteResult, error) {
+func DeleteUserById(ctx context.Context, id primitive.ObjectID) (*mongo.DeleteResult, error) {
 	result, err := collection.DeleteOne(ctx, model.User{Id: id})
 	if err != nil {
 		return nil, err
