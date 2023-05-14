@@ -17,5 +17,9 @@ go build src/main.go
 ```
 
 ## Important note
-Before running an app, redis-server must be working
-
+Before running an app, redis-server must be running
+e.q.
+```
+docker pull redis
+docker run --name my-redis -p 6379:6379 -d redis
+```
